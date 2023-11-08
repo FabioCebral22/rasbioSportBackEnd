@@ -14,7 +14,32 @@ router.get('/users', async (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
+  const { nombre, telefono, correo, contraseña, confirmarContraseña } = req.body;
+
+  if (!nombre || !telefono || !correo || !contraseña || !confirmarContraseña) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  }
+
+  if (contraseña !== confirmarContraseña) {
+    return res.status(400).json({ error: 'Las contraseñas no coinciden' });
+  }
+
+  try {
+    const existingUser = await db.oneOrNone('SELECT * FROM usuari WHERE user_email = $1', [correo]);
+
+    if (existingUser) {
+      return res.status(409).json({ error: 'El correo ya está registrado' });
+    }
+
+    await db.none('INSERT INTO usuari (user_nombre, user_telefono, user_email, user_password) VALUES ($1, $2, $3, $4)', [nombre, telefono, correo, contraseña]);
+
+    res.status(201).json({ message: 'Registro exitoso' });
+  } catch (error) {
+    console.error('Error en el registro:', error);
+    res.status(500).json({ error: 'Error en el registro. Inténtalo de nuevo más tarde.' });
+  }
 });
+
 
 router.post('/login', async (req, res) => {
     const { correo, contraseña } = req.body;
