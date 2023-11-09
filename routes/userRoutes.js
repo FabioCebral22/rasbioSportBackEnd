@@ -29,18 +29,26 @@ router.post('/register', async (req, res) => {
 
     if (existingUser) {
       return res.status(409).json({ error: 'El correo ya está registrado' });
-    }
+    } 
+  } catch (error) {
+    console.error('Hola Error en el registro:', error);
+    res.status(500).json({ error: 'Error en el registro. Inténtalo de nuevo más tarde.' });
+  }
 
+  try{
     const nextUserId = await db.one('SELECT nextval(\'user_id_seq\')');
     
     await db.none('INSERT INTO usuari (id_user, name_user, user_phone, user_email, user_password) VALUES ($1, $2, $3, $4, $5)', [nextUserId.nextval, nombre, telefono, correo, contraseña]);
 
-    res.status(201).json({ message: 'Registro exitoso' });
-  } catch (error) {
-    console.error('Error en el registro:', error);
-    res.status(500).json({ error: 'Error en el registro. Inténtalo de nuevo más tarde.' });
+    res.status(200).json({ message: 'Registro exitoso' });
+  } catch(error){
+    console.log('Prueba')
   }
-});
+
+  }
+
+
+);
 
 
 
