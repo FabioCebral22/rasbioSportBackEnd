@@ -51,28 +51,30 @@ router.post('/register', async (req, res) => {
 );
 
 const SECRET_KEY = '1243';
-
 router.post('/login', async (req, res) => {
-    const { correo, contraseña } = req.body;
+  const { correo, contraseña } = req.body;
 
-    if (!correo || !contraseña) {
-        return res.status(400).json({ error: 'Correo y contraseña son obligatorios' });
-    }
+  if (!correo || !contraseña) {
+      return res.status(400).json({ error: 'Correo y contraseña son obligatorios' });
+  }
 
-    try {
-        const user = await db.oneOrNone('SELECT * FROM usuari WHERE user_email = $1 AND user_password = $2', [correo, contraseña]);
+  try {
+      const user = await db.oneOrNone('SELECT * FROM usuari WHERE user_email = $1 AND user_password = $2', [correo, contraseña]);
 
-        if (!user) {
-            return res.status(401).json({ error: 'Credenciales incorrectas' });
-        }
+      if (!user) {
+          return res.status(401).json({ error: 'Credenciales incorrectas' });
+      }
 
-        const token = jwt.sign({ userId: user.id_user, userEmail: user.user_email }, SECRET_KEY, { expiresIn: '1h' });
+      const token = jwt.sign({ userId: user.id_user, userEmail: user.user_email }, SECRET_KEY, { expiresIn: '1h' });
+      console.log('Token generado:', token);
+      res.json({ message: 'Inicio de sesión exitoso', token });
+      
 
-        res.json({ message: 'Inicio de sesión exitoso', token });
-    } catch (error) {
-        console.error('Error en el inicio de sesión:', error);
-        res.status(500).json({ error: 'Error en el inicio de sesión. Inténtalo de nuevo más tarde.' });
-    }
+      res.json({ message: 'Inicio de sesión exitoso', token });
+  } catch (error) {
+      console.error('Error en el inicio de sesión:', error);
+      res.status(500).json({ error: 'Error en el inicio de sesión. Inténtalo de nuevo más tarde.' });
+  }
 });
 
 
