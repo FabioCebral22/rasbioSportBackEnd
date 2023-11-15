@@ -65,7 +65,7 @@ router.post('/login', async (req, res) => {
           return res.status(401).json({ error: 'Credenciales incorrectas' });
       }
 
-      const token = jwt.sign({ userId: user.id_user, userEmail: user.user_email }, SECRET_KEY, { expiresIn: '1h' });
+      const token = jwt.sign({ userId: user.id_user, userEmail: user.user_email }, SECRET_KEY, { expiresIn: '48h' });
       console.log('Token generado:', token);
       res.json({ message: 'Inicio de sesión exitoso', token });
       
@@ -78,7 +78,7 @@ router.post('/login', async (req, res) => {
 });
 
 
-const authMiddleware = require('./authMiddleware');
+const authMiddleware = require('../authMiddleware');
 
 // Paginas protegidas
 router.get('/profile', authMiddleware, (req, res) => {
