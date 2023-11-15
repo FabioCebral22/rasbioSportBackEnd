@@ -3,6 +3,18 @@ const router = express.Router();
 const db = require('../connection');
 const jwt = require('jsonwebtoken');
 
+router.get('/users/user', async (req,res) =>{
+  try {
+    const { correo, contraseña } = req.body;
+    const user = await db.oneOrNone('SELECT * FROM usuari WHERE user_email = $1 AND user_password = $2', [correo, contraseña]);
+    res.json(user)
+  }catch (error) {
+    console.error(error);
+    res.status(500).json({error: 'Error al obtener datos de tu usuario'})
+  }
+})
+
+//TODOS LOS USUARIOS
 router.get('/users', async (req, res) => {
   try {
     const data = await db.any('SELECT * FROM usuari');
@@ -12,7 +24,7 @@ router.get('/users', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener datos de usuarios' });
   }
 });
-
+//REGISTRO
 router.post('/register', async (req, res) => {
   const { nombre, telefono, correo, contraseña, confirmarContraseña } = req.body;
 
@@ -51,7 +63,7 @@ router.post('/register', async (req, res) => {
 );
 
 
-
+//LOGIN
 router.post('/login', async (req, res) => {
     const { correo, contraseña } = req.body;
   
