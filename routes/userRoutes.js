@@ -92,10 +92,10 @@ router.post('/login', async (req, res) => {
 
 const authMiddleware = require('../authMiddleware');
 
-// Paginas protegidas
-router.get('/profile', authMiddleware, (req, res) => {
+// Pagina protegida
+router.get('/profile', authMiddleware, (req, res) => {  
     // Dar acceso con req.user
-    res.json({ message: 'This is a protected route', user: req.user });
+    res.json({ message: 'Esta es una ruta protegida', user: req.user });
 });
 
 
