@@ -62,20 +62,20 @@ router.post('/register', async (req, res) => {
 
 );
 
-const SECRET_KEY = '1243';//LOGIN
+const SECRET_KEY = '1243';
 router.post('/login', async (req, res) => {
   const { correo, contraseña } = req.body;
 
   if (!correo || !contraseña) {
-      return res.status(400).json({ error: 'Correo y contraseña son obligatorios' });
+    return res.status(400).json({ error: 'Correo y contraseña son obligatorios' });
   }
 
   try {
-      const user = await db.oneOrNone('SELECT * FROM usuari WHERE user_email = $1 AND user_password = $2', [correo, contraseña]);
+    const user = await db.oneOrNone('SELECT * FROM usuari WHERE user_email = $1 AND user_password = $2', [correo, contraseña]);
 
-      if (!user) {
-          return res.status(401).json({ error: 'Credenciales incorrectas' });
-      }
+    if (!user) {
+      return res.status(401).json({ error: 'Credenciales incorrectas' });
+    }
 
       const token = jwt.sign({ userId: user.id_user, userEmail: user.user_email }, SECRET_KEY);
       console.log('Token generado:', token);
@@ -84,19 +84,25 @@ router.post('/login', async (req, res) => {
 
       res.json({ message: 'Inicio de sesión exitoso', token });
   } catch (error) {
-      console.error('Error en el inicio de sesión:', error);
-      res.status(500).json({ error: 'Error en el inicio de sesión. Inténtalo de nuevo más tarde.' });
+    console.error('Error en el inicio de sesión:', error);
+    return res.status(500).json({ error: 'Error en el inicio de sesión. Inténtalo de nuevo más tarde.' });
   }
 });
 
 
+
 const authMiddleware = require('../authMiddleware');
 
-// Pagina protegida
-router.get('/profile', authMiddleware, (req, res) => {  
-    // Dar acceso con req.user
-    res.json({ message: 'Esta es una ruta protegida', user: req.user });
+router.get('/profile', authMiddleware, (req, res) => {
+  try {
+      console.log('User Data:', req.user);
+      res.json({ message: 'Esta es una ruta protegida', user: req.user });
+  } catch (error) {
+      console.error('Error al obtener datos del perfil:', error);
+      res.status(500).json({ error: 'Error al obtener datos del perfil' });
+  }
 });
+
 
 
 module.exports = router;
