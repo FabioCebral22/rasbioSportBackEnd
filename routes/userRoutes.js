@@ -62,6 +62,7 @@ router.post('/register', async (req, res) => {
 
 );
 
+//LOGIN
 const SECRET_KEY = '1243';
 router.post('/login', async (req, res) => {
   const { correo, contraseña } = req.body;
@@ -88,7 +89,7 @@ router.post('/login', async (req, res) => {
 });
 
 
-
+//PERFIL
 const authMiddleware = require('../authMiddleware');
 
 router.get('/profile', authMiddleware, (req, res) => {
