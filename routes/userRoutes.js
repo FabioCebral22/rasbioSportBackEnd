@@ -80,7 +80,6 @@ router.post('/register', async (req, res) => {
       console.log('Correo de verificación enviado:', info.response);
     });
 
-    // Resto de la lógica de registro
     const nextUserId = await db.one('SELECT nextval(\'user_id_seq\')');
     await db.none('INSERT INTO usuari (id_user, name_user, user_phone, user_email, user_password) VALUES ($1, $2, $3, $4, $5)', [nextUserId.nextval, nombre, telefono, correo, contraseña]);
 
