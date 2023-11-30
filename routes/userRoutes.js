@@ -96,7 +96,7 @@ const authMiddleware = require('../authMiddleware');
 router.get('/profile', authMiddleware, (req, res) => {
   try {
       console.log('User Data:', req.user);
-      res.json({ message: 'Esta es una ruta protegida', user: req.user });
+      res.json( { message: 'Esta es una ruta protegida', user: req.user } );
   } catch (error) {
       console.error('Error al obtener datos del perfil:', error);
       res.status(500).json({ error: 'Error al obtener datos del perfil' });
