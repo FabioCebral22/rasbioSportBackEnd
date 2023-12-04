@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../connection');
 const jwt = require('jsonwebtoken');
 const User = require('../classes/userClass');
+const authMiddleware = require('../authMiddleware');
 
 
 router.get('/users/user', async (req,res) =>{
@@ -89,7 +90,7 @@ router.post('/login', async (req, res) => {
 
 
 //PERFIL
-const authMiddleware = require('../authMiddleware');
+
 
 router.get('/profile', authMiddleware, (req, res) => {
   try {
@@ -98,6 +99,24 @@ router.get('/profile', authMiddleware, (req, res) => {
   } catch (error) {
       console.error('Error al obtener datos del perfil:', error);
       res.status(500).json({ error: 'Error al obtener datos del perfil' });
+  }
+});
+
+router.put('/me', authMiddleware, async (req, res) => {
+  const { id_user, field, value} = req.body
+  const userID = parseInt(id_user);
+  const nameField = JSON.parse(field)
+  const newValue = JSON.parse(value)
+  try {
+    const user = await db.oneOrNone("UPDATE usuari SET $1~ = $2 WHERE id_user = $3;", [nameField, newValue, userID]);
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+  } catch (error) {
+    console.error('Error al obtener datos del usuario:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
