@@ -12,26 +12,33 @@ router.get('/products', async (req, res) => {
     `;
     const params = [];
     const conditions = [];
+
     if (req.query.category_name) {
       conditions.push('category.category_name = $' + (params.length + 1));
       params.push(req.query.category_name);
     }
+
     if (req.query.size) {
       conditions.push('product_size = $' + (params.length + 1));
       params.push(req.query.size);
     }
+
     if (req.query.min_price && req.query.max_price) {
       conditions.push('product_price BETWEEN $' + (params.length + 1) + ' AND $' + (params.length + 2));
       params.push(req.query.min_price);
       params.push(req.query.max_price);
     }
+
     if (conditions.length) {
       query += ' WHERE ' + conditions.join(' AND ');
     }
+
     console.log('Query SQL:', query);
     console.log('Parámetros:', params);
+
     const products = await db.any(query, params);
     console.log('Productos encontrados:', products);
+
     res.json(products);
   } catch (error) {
     console.error('Error al obtener los productos:', error);
@@ -39,7 +46,45 @@ router.get('/products', async (req, res) => {
   }
 });
 
+router.get('/products/:product_name', async (req, res) => {
+  const { product_name } = req.params;
+  console.log(product_name)
+  try {
+    const newProduct_name = decodeURIComponent(product_name.replace(/\%20/g, ' '));
+    console.log(newProduct_name)
+    const productDetails = await db.oneOrNone('SELECT * FROM product WHERE product_name = $1', [newProduct_name]);
+    if (productDetails) {
+      res.json(productDetails);
+    } else {
+      res.status(404).json({ message: 'Producto no encontrado' });
+    }
+  } catch (error) {
+    console.error('Error al obtener detalles del producto:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
 
+router.get('/products/:product_id/reviews', async (req, res) => {
+  const { product_id } = req.params;
+  try {
+    const reviews = await db.any('SELECT * FROM review WHERE product_id = $1', [product_id]);
+    res.json(reviews);
+  } catch (error) {
+    console.error('Error al obtener reseñas:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+router.get('/products/related/:category_id', async (req, res) => {
+  const { category_id } = req.params;
+  try {
+    const relatedProducts = await db.any('SELECT * FROM product WHERE category_id = $1', [category_id]);
+    res.json(relatedProducts);
+  } catch (error) {
+    console.error('Error al obtener productos relacionados:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
 
 
 router.delete('/products/:id', async (req, res) => {
