@@ -37,7 +37,6 @@ router.get('/products', async (req, res) => {
     console.log('Parámetros:', params);
 
     const products = await db.any(query, params);
-    console.log('Productos encontrados:', products);
 
     res.json(products);
   } catch (error) {
@@ -45,7 +44,7 @@ router.get('/products', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener los productos' });
   }
 });
-
+//DATOS DE UN PRODUCTO EN CONCRETO
 router.get('/products/:product_name', async (req, res) => {
   const { product_name } = req.params;
   console.log(product_name)
@@ -64,6 +63,7 @@ router.get('/products/:product_name', async (req, res) => {
   }
 });
 
+//REVIEWS DE UN PRODUCTO
 router.get('/products/:product_id/reviews', async (req, res) => {
   const { product_id } = req.params;
   try {
@@ -90,10 +90,13 @@ router.get('/products/:product_id/reviews', async (req, res) => {
 
 
 
+
 router.get('/products/related/:category_id', async (req, res) => {
   const { category_id } = req.params;
+  console.log('CATEGORY ID:' + category_id)
   try {
     const relatedProducts = await db.any('SELECT * FROM product WHERE category_id = $1', [category_id]);
+    console.log('RELATED PRODUCTS \n' + relatedProducts)
     res.json(relatedProducts);
   } catch (error) {
     console.error('Error al obtener productos relacionados:', error);
@@ -102,6 +105,7 @@ router.get('/products/related/:category_id', async (req, res) => {
 });
 
 
+//ELIMINAR PRODUCTO
 router.delete('/products/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -112,18 +116,12 @@ router.delete('/products/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar el producto' });
   }
 });
-
+//TODOS LOS PRODUCTOS
 router.post('/products', async (req, res) => {
   const { product_name, category, product_info, product_image, product_size, product_price, product_tag } = req.body;
   const precio = parseInt(product_price)
-
-  console.log('Datos recibidos:', req.body);
-
-
   try {
-
     const categoryResult = await db.oneOrNone('SELECT category_id FROM category WHERE category_name = $1', [JSON.parse(category)]);
-
     if (categoryResult) {
       const category_id = categoryResult.category_id;
       console.log('Se ha creado el usuario');
@@ -140,6 +138,7 @@ router.post('/products', async (req, res) => {
     res.status(500).json({ error: 'Error al añadir el producto' });
   }
 });
+
 router.put('/products/:id', async (req, res) => {
   const { id } = req.params;
   const {
@@ -152,9 +151,7 @@ router.put('/products/:id', async (req, res) => {
     product_price,
     product_tag
   } = req.body;
-
   try {
-    console.log("hola")
     await db.none(
       'UPDATE product SET product_name = $1, category_id = $2, product_desc = $3, product_info = $4, product_image = $5, product_size = $6, product_price = $7, product_tag = $8 WHERE product_id = $9',
       [product_name, category_id, product_desc, product_info, product_image, product_size, product_price, product_tag, id]
