@@ -67,13 +67,28 @@ router.get('/products/:product_name', async (req, res) => {
 router.get('/products/:product_id/reviews', async (req, res) => {
   const { product_id } = req.params;
   try {
-    const reviews = await db.any('SELECT * FROM review WHERE product_id = $1', [product_id]);
+    const reviews = await db.any(`
+      SELECT 
+        r.review_id,
+        r.user_id,
+        r.product_id,
+        r.review_rating,
+        r.review_info,
+        r.review_image,
+        r.review_date,
+        u.name_user as user_name
+      FROM review r
+      INNER JOIN usuari u ON r.user_id = u.id_user
+      WHERE r.product_id = $1
+    `, [product_id]);
     res.json(reviews);
   } catch (error) {
     console.error('Error al obtener reseñas:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
+
 
 router.get('/products/related/:category_id', async (req, res) => {
   const { category_id } = req.params;
