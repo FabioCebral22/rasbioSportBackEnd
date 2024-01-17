@@ -70,7 +70,7 @@ router.get('/products/:product_id/reviews', async (req, res) => {
     const reviews = await db.any(`
       SELECT 
         r.review_id,
-        r.user_id,
+        r.id_user,
         r.product_id,
         r.review_rating,
         r.review_info,
@@ -78,7 +78,7 @@ router.get('/products/:product_id/reviews', async (req, res) => {
         r.review_date,
         u.name_user as user_name
       FROM review r
-      INNER JOIN usuari u ON r.user_id = u.id_user
+      INNER JOIN usuari u ON r.id_user = u.id_user
       WHERE r.product_id = $1
     `, [product_id]);
     res.json(reviews);

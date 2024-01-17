@@ -48,7 +48,7 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ error: 'El correo ya está registrado' });
     }
 
-    const nextUserId = await db.one('SELECT nextval(\'user_id_seq\')');
+    const nextUserId = await db.one('SELECT nextval(\'id_user_seq\')');
     await db.none('INSERT INTO usuari (id_user, name_user, user_phone, user_email, user_password) VALUES ($1, $2, $3, $4, $5)', [nextUserId.nextval, nombre, telefono, correo, contraseña]);
 
     res.status(200).json({ message: 'Registro exitoso' });
