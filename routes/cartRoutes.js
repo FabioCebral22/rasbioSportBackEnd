@@ -4,13 +4,14 @@ const db = require('../connection');
 
 router.post('/cart/add', async (req, res) => {
     const { userId, productId } = req.body;
-  
+  console.log("user id" + userId)
+  console.log("productId" + productId)
     try {
       // Primero, encuentra o crea un carrito para el usuario
-      let cart = await db.oneOrNone('SELECT scart_id FROM shopping_cart WHERE user_id = $1', [userId]);
+      let cart = await db.oneOrNone('SELECT scart_id FROM shopping_cart WHERE id_user = $1', [userId]);
       if (!cart) {
-        await db.none('INSERT INTO shopping_cart (user_id, scart_total) VALUES ($1, 0)', [userId]);
-        cart = await db.one('SELECT scart_id FROM shopping_cart WHERE user_id = $1', [userId]);
+        await db.none('INSERT INTO shopping_cart (id_user, scart_total) VALUES ($1, 0)', [userId]);
+        cart = await db.one('SELECT scart_id FROM shopping_cart WHERE id_user = $1', [userId]);
       }
   
       // Luego, añade el producto al carrito
@@ -31,7 +32,7 @@ router.post('/cart/add', async (req, res) => {
         SELECT p.*, ci.quantity FROM cart_items ci
         JOIN product p ON ci.product_id = p.product_id
         JOIN shopping_cart sc ON ci.scart_id = sc.scart_id
-        WHERE sc.user_id = $1`, [userId]);
+        WHERE sc.id_user = $1`, [userId]);
   
       res.json(cartItems);
     } catch (error) {
