@@ -88,7 +88,16 @@ router.get('/products/:product_id/reviews', async (req, res) => {
   }
 });
 
-
+router.get('/products/search', async (req, res) => {
+  const { query } = req.query;
+  try {
+    const products = await db.any('SELECT * FROM product WHERE LOWER(product_name) LIKE LOWER($1) LIMIT 3', [`%${query}%`]);
+    res.json(products);
+  } catch (error) {
+    console.error('Error al buscar productos:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
 
 
 router.get('/products/related/:category_id', async (req, res) => {

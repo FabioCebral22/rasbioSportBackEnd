@@ -48,8 +48,13 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ error: 'El correo ya está registrado' });
     }
 
-    const nextUserId = await db.one('SELECT nextval(\'id_user_seq\')');
-    await db.none('INSERT INTO usuari (id_user, name_user, user_phone, user_email, user_password) VALUES ($1, $2, $3, $4, $5)', [nextUserId.nextval, nombre, telefono, correo, contraseña]);
+    // Obtén el próximo valor de la secuencia para id_user y scart_id
+    const nextIds = await db.one('SELECT nextval(\'id_user_seq\') AS next_user, nextval(\'scart_id_seq\') AS next_cart');
+    
+    // Inserta en usuari y shopping_cart con los valores generados
+    await db.none('INSERT INTO usuari (id_user, name_user, user_phone, user_email, user_password) VALUES ($1, $2, $3, $4, $5)', [nextIds.next_user, nombre, telefono, correo, contraseña]);
+
+    await db.none('INSERT INTO shopping_cart (scart_id, id_user, scart_total) VALUES ($1, $2, 0)', [nextIds.next_cart, nextIds.next_user]);
 
     res.status(200).json({ message: 'Registro exitoso' });
   } catch (error) {
@@ -57,6 +62,11 @@ router.post('/register', async (req, res) => {
     res.status(500).json({ error: 'Error en el registro. Inténtalo de nuevo más tarde.' });
   }
 });
+
+
+
+
+
 
 
 //LOGIN
