@@ -139,6 +139,22 @@ router.post('/products', async (req, res) => {
   }
 });
 
+router.get('/products/search', async (req, res) => {
+  const { query } = req.query;
+  console.log("La query es " + query);
+
+
+  
+  // try {
+  //   const products = await db.any('SELECT * FROM product WHERE LOWER(product_name) LIKE LOWER($1) LIMIT 3', [`%${query}%`]);
+  //   console.log("MIERDON", products);
+  //   res.json(products);    
+  // } catch (error) {
+  //   console.error('Error al buscar productos:', error);
+  //   res.status(500).json({ error: 'Error interno del servidor' });
+  // }
+});
+
 router.put('/products/:id', async (req, res) => {
   const { id } = req.params;
   const {
