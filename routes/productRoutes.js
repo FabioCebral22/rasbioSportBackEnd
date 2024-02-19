@@ -4,6 +4,8 @@ const db = require('../connection');
 const jwt = require('jsonwebtoken');
 
 
+
+
 router.get('/products', async (req, res) => {
   try {
     let query = `
@@ -88,16 +90,7 @@ router.get('/products/:product_id/reviews', async (req, res) => {
   }
 });
 
-router.get('/products/search', async (req, res) => {
-  const { query } = req.query;
-  try {
-    const products = await db.any('SELECT * FROM product WHERE LOWER(product_name) LIKE LOWER($1) LIMIT 3', [`%${query}%`]);
-    res.json(products);
-  } catch (error) {
-    console.error('Error al buscar productos:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
+
 
 
 router.get('/products/related/:category_id', async (req, res) => {
@@ -148,20 +141,82 @@ router.post('/products', async (req, res) => {
   }
 });
 
+//GET TALLAS
+router.get('/get/tallas/:productId', async (req, res) => {
+  const productId = req.params.productId;
+
+  try {
+    const query = 'SELECT product_size, product_stock FROM size WHERE product_id = $1';
+    const result = await db.query(query, [productId]);
+
+    const sizes = result.rows.map((row) => ({
+      product_size: row.product_size,
+      product_stock: row.product_stock,
+    }));
+
+    res.status(200).json({ sizes });
+  } catch (error) {
+    console.error('Error al obtener tallas:', error);
+    res.status(500).json({ error: 'Error al obtener tallas' });
+  }
+});
+
+//AÑADIR TALLA
+router.post('/add/talla', async (req, res) => {
+  try {
+    const { Tallas } = req.body;
+    if (!Tallas || typeof Tallas !== 'object') {
+      return res.status(400).send('Formato de datos incorrecto.');
+    }
+
+    const lastProductQuery = 'SELECT MAX(product_id) FROM product';
+    const result = await db.query(lastProductQuery);
+    
+    // Extraer el valor específico directamente
+    const lastProductId = result[0].max;
+    
+    console.log(lastProductId);
+    
+    for (const [size, info] of Object.entries(Tallas)) {
+      console.log(`Nombre: ${info.name}, Cantidad: ${info.cantidad}`);
+  
+      // Obtener el próximo valor de la secuencia
+      const nextProdSizeId = await db.one('SELECT nextval(\'prod_size_id_seq\')');
+      const prodSizeId = parseInt(nextProdSizeId.nextval, 10);
+      console.log(prodSizeId);
+  
+      // Insertar en la tabla size
+      await db.none('INSERT INTO size (product_id, product_size, product_stock, prod_size_id) VALUES ($1, $2, $3, $4)', [result[0].max, info.name, info.cantidad, prodSizeId]);
+      console.log("JIJU");
+    }
+  } catch (error) {
+    console.error('Error al añadir tallas:', error);
+    res.status(500).send('Error al añadir tallas.');
+  }
+});
+
+
+
+
+
+//BUSCAR UN PRODUCTO
 router.get('/products/search', async (req, res) => {
   const { query } = req.query;
   console.log("La query es " + query);
 
+  try {
+    const products = await db.any(`
+      SELECT * FROM product 
+      WHERE LOWER(product_name) LIKE LOWER($1)
+      LIMIT 3
+    `, [`%${query}%`]);
 
-  
-  // try {
-  //   const products = await db.any('SELECT * FROM product WHERE LOWER(product_name) LIKE LOWER($1) LIMIT 3', [`%${query}%`]);
-  //   console.log("MIERDON", products);
-  //   res.json(products);    
-  // } catch (error) {
-  //   console.error('Error al buscar productos:', error);
-  //   res.status(500).json({ error: 'Error interno del servidor' });
-  // }
+    console.log("Resultados de la búsqueda:", products);
+    res.json(products);
+  } catch (error) {
+    console.error('Error al buscar productos:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
 router.put('/products/:id', async (req, res) => {
