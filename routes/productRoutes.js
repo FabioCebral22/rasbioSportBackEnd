@@ -88,11 +88,40 @@ router.get('/products/:product_id/reviews', async (req, res) => {
   }
 });
 
-router.get('/products/search', async (req, res) => {
+router.get('/search', async (req, res) => {
+  // Obteniendo el término de búsqueda, límite y desplazamiento de los parámetros de la consulta
   const { query } = req.query;
+  console.log("-----------------------------------------------"+query+"---------------------------------------------------------------------");
+  let { limit, offset } = req.query;
+
+  // Establecer valores predeterminados si no se proporcionan
+  limit = limit ? parseInt(limit, 10) : 10;
+  offset = offset ? parseInt(offset, 10) : 0;
+
+  // Validación básica de los parámetros
+  if (!query) {
+    return res.status(400).json({ error: 'El término de búsqueda es requerido' });
+  }
+  if (isNaN(limit) || isNaN(offset)) {
+    return res.status(400).json({ error: 'Limit y Offset deben ser números válidos' });
+  }
+
   try {
-    const products = await db.any('SELECT * FROM product WHERE LOWER(product_name) LIKE LOWER($1) LIMIT 3', [`%${query}%`]);
-    res.json(products);
+    // Consulta segura utilizando parámetros con pg-promise para evitar inyecciones SQL
+    const products = await db.any(`
+      SELECT * FROM product
+      WHERE LOWER(product_name) LIKE LOWER($1)
+      OR LOWER(product_desc) LIKE LOWER($1)
+      ORDER BY product_id ASC
+    `, [`%${query}%`]);
+
+    // Comprobando si se encontraron productos
+    if (products.length > 0) {
+      res.json({products});
+    } else {
+      res.status(404).json({ message: 'No se encontraron productos' });
+      console.log("mal")
+    }
   } catch (error) {
     console.error('Error al buscar productos:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
