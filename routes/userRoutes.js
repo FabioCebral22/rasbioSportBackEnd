@@ -28,17 +28,39 @@ router.get('/users', async (req, res) => {
   }
 });
 
+router.put('/change-password', authMiddleware, async (req, res) => {
+  const { id_user, new_password } = req.body;
+
+  try {
+    // Actualiza la contraseña en la base de datos
+    await db.none('UPDATE usuari SET user_password = $1 WHERE id_user = $2', [new_password, id_user]);
+
+    res.json({ message: 'Contraseña actualizada exitosamente' });
+  } catch (error) {
+    console.error('Error al actualizar la contraseña:', error);
+    res.status(500).json({ error: 'Error al actualizar la contraseña. Inténtalo de nuevo más tarde.' });
+  }
+});
+
+
+
 // RUTA DE REGISTRO
 router.post('/register', async (req, res) => {
-  const { nombre, telefono, correo, contraseña, confirmarContraseña } = req.body;
+  const { nombre, telefono, correo, contraseña, confirmarContraseña, direccion } = req.body;
 
   // Validaciones
-  if (!nombre || !telefono || !correo || !contraseña || !confirmarContraseña) {
+  if (!nombre || !telefono || !correo || !contraseña || !confirmarContraseña || !direccion) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
 
   if (contraseña !== confirmarContraseña) {
     return res.status(400).json({ error: 'Las contraseñas no coinciden' });
+  }
+
+  // Validación de la contraseña
+  const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/;
+  if (!passwordRegex.test(contraseña)) {
+    return res.status(400).json({ error: 'La contraseña no cumple con los requisitos mínimos' });
   }
 
   try {
@@ -52,7 +74,7 @@ router.post('/register', async (req, res) => {
     const nextIds = await db.one('SELECT nextval(\'id_user_seq\') AS next_user, nextval(\'scart_id_seq\') AS next_cart');
     
     // Inserta en usuari y shopping_cart con los valores generados
-    await db.none('INSERT INTO usuari (id_user, name_user, user_phone, user_email, user_password) VALUES ($1, $2, $3, $4, $5)', [nextIds.next_user, nombre, telefono, correo, contraseña]);
+    await db.none('INSERT INTO usuari (id_user, name_user, user_phone, user_email, user_password, user_address) VALUES ($1, $2, $3, $4, $5, $6)', [nextIds.next_user, nombre, telefono, correo, contraseña, direccion]);
 
     await db.none('INSERT INTO shopping_cart (scart_id, id_user, scart_total) VALUES ($1, $2, 0)', [nextIds.next_cart, nextIds.next_user]);
 
@@ -62,6 +84,7 @@ router.post('/register', async (req, res) => {
     res.status(500).json({ error: 'Error en el registro. Inténtalo de nuevo más tarde.' });
   }
 });
+
 
 
 
