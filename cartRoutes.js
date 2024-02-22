@@ -1,35 +1,26 @@
 const express = require('express');
-const pgp = require('pg-promise')();
-
 const router = express.Router();
 const db = require('../connection');
 
-router.post('/order/add', async (req, res) => {
-  const { userId, orderAddress, orderTotal } = req.body;
+
+
+router.post('/order/add',async (req, res) => {
+  const { userId, order_address, order_total } = req.body;
 
   try {
     const nextOrderID = await db.one('SELECT nextval(\'order_id_seq\')');
     const prodSizeId = parseInt(nextOrderID.nextval, 10);
+   let pedido = await db.oneOrNone('INSERT INTO pedido (order_id, user_id, order_address, order_total, order_payment, order_status, order_date, order_discount, order_shipment) VALUES ($1, $2, $3, $4, Tarjeta, Pagado, NULL, Envío Normal)', [ prodSizeId ,userId, order_address, order_total]);
+   res.json({ message: 'Pedido añadido' });
 
-    console.log(prodSizeId);
+  } catch (error){
+    console.error('Error al añadir al carrito:', error);
+    res.status(500).json({ error: 'Error al añadir al carrito' });
 
-    const string = pgp.as.format('INSERT INTO pedido (order_id, user_id, order_address, order_total, order_payment, order_status, order_date, order_discount, order_shipment) VALUES ($1, $2, $3, $4, \'Tarjeta\', \'Pagado\', now(), NULL, \'Envío Normal\')', [prodSizeId, userId, orderAddress, orderTotal]);
-
-    console.log(string);
-
-    const pedido = await db.oneOrNone('INSERT INTO pedido (order_id, user_id, order_address, order_total, order_payment, order_status, order_date, order_discount, order_shipment) VALUES ($1, $2, $3, $4, \'Tarjeta\', \'Pagado\', now(), NULL, \'Envío Normal\')', [prodSizeId, userId, orderAddress, orderTotal]);
-
-    if (pedido) {
-      res.json({ message: 'Pedido añadido' });
-    } else {
-      res.status(500).json({ error: 'Error al añadir el pedido' });
-    }
-  } catch (error) {
-    console.error('Error al añadir el pedido:', error);
-    res.status(500).json({ error: 'Error al añadir el pedido' });
   }
-});
 
+
+});
 
 
 //AÑADIR UN PRODUCTO
