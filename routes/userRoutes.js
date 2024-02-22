@@ -42,7 +42,66 @@ router.put('/change-password', authMiddleware, async (req, res) => {
   }
 });
 
+router.post('/verify-password', authMiddleware, async (req, res) => {
+  const { id_user, current_password } = req.body;
 
+  try {
+    // Obtener la contraseña actual del usuario desde la base de datos
+    const user = await db.one('SELECT user_password FROM usuari WHERE id_user = $1', [id_user]);
+
+    // Comparar la contraseña proporcionada con la almacenada en la base de datos
+    const isPasswordCorrect = current_password === user.user_password;
+
+    res.json({ isPasswordCorrect });
+  } catch (error) {
+    console.error('Error al verificar la contraseña:', error);
+    res.status(500).json({ error: 'Error al verificar la contraseña. Inténtalo de nuevo más tarde.' });
+  }
+});
+
+
+router.get('/user-orders/:userId', authMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const orders = await db.any(`
+      SELECT o.order_id, o.order_date, o.order_total, od.product_id, od.quantity, p.product_name, p.product_price, p.product_image
+      FROM "ORDER"
+      JOIN ORDER_DETAIL od ON o.order_id = od.order_id
+      JOIN PRODUCT p ON od.product_id = p.product_id
+      WHERE o.user_id = $1
+      ORDER BY o.order_date DESC
+    `, [userId]);
+
+    // Agrupar por orderId para estructurar los datos de manera coherente para el front
+    const groupedOrders = orders.reduce((acc, order) => {
+      // Si el pedido ya esta en el acumulador, agrega el producto actual a su lista
+      if (!acc[order.order_id]) {
+        acc[order.order_id] = {
+          order_id: order.order_id,
+          order_date: order.order_date,
+          order_total: order.order_total,
+          products: []
+        }
+      }
+      acc[order.order_id].products.push({
+        product_id: order.product_id,
+        quantity: order.quantity,
+        product_name: order.product_name,
+        product_price: order.product_price,
+        product_image: order.product_image
+      });
+      return acc;
+    }, {});
+
+    // Convertir el objeto agrupado en un array de objetos de pedidos
+    const ordersArray = Object.values(groupedOrders);
+
+    res.json(ordersArray);
+  } catch (error) {
+    console.error('Error al obtener los pedidos del usuario:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
 
 // RUTA DE REGISTRO
 router.post('/register', async (req, res) => {
