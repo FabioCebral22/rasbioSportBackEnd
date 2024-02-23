@@ -64,12 +64,12 @@ router.get('/user-orders/:userId', authMiddleware, async (req, res) => {
   const { userId } = req.params;
   try {
     const orders = await db.any(`
-      SELECT o.order_id, o.order_date, o.order_total, od.product_id, od.quantity, p.product_name, p.product_price, p.product_image
-      FROM "ORDER"
-      JOIN ORDER_DETAIL od ON o.order_id = od.order_id
-      JOIN PRODUCT p ON od.product_id = p.product_id
-      WHERE o.user_id = $1
-      ORDER BY o.order_date DESC
+    SELECT o.order_id, o.order_date, o.order_total, od.product_id, od.quantity, p.product_name, p.product_price, p.product_image 
+    FROM pedido o 
+    JOIN ORDER_DETAILS od ON o.order_id = od.order_id 
+    JOIN PRODUCT p ON od.product_id = p.product_id 
+    WHERE o.user_id = $1
+    ORDER BY o.order_date DESC;
     `, [userId]);
 
     // Agrupar por orderId para estructurar los datos de manera coherente para el front
@@ -99,6 +99,18 @@ router.get('/user-orders/:userId', authMiddleware, async (req, res) => {
     res.json(ordersArray);
   } catch (error) {
     console.error('Error al obtener los pedidos del usuario:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+router.post('/add-review', authMiddleware, async (req, res) => {
+  const { userId, productId, rating, comment } = req.body;
+  try {
+    // Asumiendo que tienes una función para añadir la review a la base de datos
+    await db.none('INSERT INTO review (id_user, product_id, review_rating, review_info, review_date) VALUES ($1, $2, $3, $4, CURRENT_DATE)', [userId, productId, rating, comment]);
+    res.json({ message: 'Review añadida exitosamente' });
+  } catch (error) {
+    console.error('Error al añadir review:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
