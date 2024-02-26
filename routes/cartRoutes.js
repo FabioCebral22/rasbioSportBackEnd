@@ -5,30 +5,48 @@ const router = express.Router();
 const db = require('../connection');
 
 router.post('/order/add', async (req, res) => {
-  const { userId, orderAddress, orderTotal } = req.body;
+  const { userId, orderAddress, orderTotal, productIds, productos } = req.body;
 
   try {
+    console.log("TUS PRODUCTOS" + JSON.stringify(productos))
     const nextOrderID = await db.one('SELECT nextval(\'order_id_seq\')');
     const prodSizeId = parseInt(nextOrderID.nextval, 10);
-
-    console.log(prodSizeId);
 
     const string = pgp.as.format('INSERT INTO pedido (order_id, user_id, order_address, order_total, order_payment, order_status, order_date, order_discount, order_shipment) VALUES ($1, $2, $3, $4, \'Tarjeta\', \'Pagado\', now(), NULL, \'Envío Normal\')', [prodSizeId, userId, orderAddress, orderTotal]);
 
     console.log(string);
 
     const pedido = await db.oneOrNone('INSERT INTO pedido (order_id, user_id, order_address, order_total, order_payment, order_status, order_date, order_discount, order_shipment) VALUES ($1, $2, $3, $4, \'Tarjeta\', \'Pagado\', now(), NULL, \'Envío Normal\')', [prodSizeId, userId, orderAddress, orderTotal]);
+    
+    console.log("ID DE LOS PRODUCTOS: " + productIds)
+    
 
-    if (pedido) {
-      res.json({ message: 'Pedido añadido' });
-    } else {
-      res.status(500).json({ error: 'Error al añadir el pedido' });
+    const lastProductQuery = 'SELECT MAX(order_id) FROM pedido';
+    const result = await db.query(lastProductQuery);
+    console.log(result[0].max)
+    for (const producto of productos) {
+      const { product_id, quantity, size } = producto;
+      console.log(product_id)
+      console.log(quantity)
+      console.log(size)
+      await db.none('INSERT INTO order_details (order_id, product_id, quantity, size) VALUES ($1, $2, $3, $4)', [result[0].max, product_id, quantity, size]);
     }
+
+
+    const scartId = await db.oneOrNone('SELECT scart_id FROM shopping_cart WHERE id_user=$1;', [userId]);
+    console.log("SCART ID : " + scartId.scart_id);
+
+      await db.none('DELETE FROM "cart_items" WHERE scart_id=$1;', [scartId.scart_id]);
+
+
+
+
   } catch (error) {
     console.error('Error al añadir el pedido:', error);
     res.status(500).json({ error: 'Error al añadir el pedido' });
   }
 });
+
 
 
 
@@ -126,4 +144,3 @@ router.get('/cart/:userId', async (req, res) => {
 
 module.exports = router;
 
-  
