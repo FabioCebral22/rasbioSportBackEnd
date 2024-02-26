@@ -103,6 +103,18 @@ router.get('/user-orders/:userId', authMiddleware, async (req, res) => {
   }
 });
 
+router.get('/user-orders/:orderId', async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    const pedido = await db.any(`SELECT * FROM pedido WHERE order_id = $1`, [orderId]);
+    res.json(pedido);
+  } catch (error) {
+    console.error('Error al obtener el pedido:', error);
+    res.status(500).json({ error: 'Error al obtener el pedido' });
+  }
+});
+
 router.post('/add-review', authMiddleware, async (req, res) => {
   const { userId, productId, rating, comment } = req.body;
   try {
